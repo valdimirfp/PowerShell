@@ -1,0 +1,15 @@
+# кодировка UTF-8
+$PSDefaultParameterValues = @{'*:Encoding' = 'utf8'}
+
+# задаем переменную которая ищет определенные группы
+$groups = (Get-ADGroup -filter {(name -like "Some_group*") -or (name -like "Some_another_group")}).name
+
+$groups |
+	ForEach-Object{
+		$groupname = $_
+		Get-ADGroupMember $groupname -Recursive |
+		Where-Object{ $_.objectClass -eq 'User' } |
+		Select-Object *, @{ n = 'GroupName'; e = { $groupname } }
+	} | Sort-Object Name |
+	Select-Object GroupName, name, samAccountName | 
+	Export-csv "C:\temp\groups_members_$((Get-Date).ToString('MM-dd-yyyy_HH-mm')).csv" -NoTypeInformation
